@@ -172,6 +172,7 @@ exit()
 
 # Possible Improvements:
 #   -Add docStrings ("""""") to describe what each function does
+#   -Have user select the size of the DTR they want to search
 #   -Check if the math on line 113 is correct
 #   -Might want to consider searching a wider window instead of just 300 characters
 #   -Can set up command line arguments using argparse
