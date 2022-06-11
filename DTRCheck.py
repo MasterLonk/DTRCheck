@@ -41,7 +41,8 @@ def match(a, b):
 
 def maybeDTR(p):
     """This function checks if a percentage is greater than a specified error bound"""
-    return p >= 0.95
+    global errorBound
+    return p >= errorBound
 
 
 def printOutSequences(a, b, l, p):
@@ -51,7 +52,7 @@ def printOutSequences(a, b, l, p):
     print("Program found the following sequences having a similarity percentage of " + f"{p:.2%}")
     if maybeDTR(p):
         print("This sequence is most likely to be a DTR.")
-    print("Sequences have a length of: " + str(l))
+    print("Sequences have a length of " + str(l) + " character(s)")
     print("The genome file has " + str(len(sequence)) + " characters in total")
     print("Sequence 1: " + sequence[a:a + l])
     print("Starting from index " + str(a) + " to index " + str(a + l - 1))
@@ -80,28 +81,37 @@ def check(i, j, l):
 
 # Easy way for a user to get the file from the directory
 # Currently, this DTRCheck can only access the files of the directory it is currently in <- Rectify in future
+print("There are two ways to input the genome file")
+print("1: Input a path that leads to the genome file")
+print("2: Search for the genome file within the current directory")
+choice = input("Choice: ")
 sequenceFile = ""
-while True:
-    print("Please select a file from the current directory to check.")
-    printingFilesInDir()
-    index = input("What number file will you select? ")
-    ans = gettingSpecificFile(index)
-    if ans == "None such file":
-        print("Please try again.")
-    else:
-        sequenceName = ans
-        print(ans)
-        print("File has been loaded.")
-        print('─' * 10)
-        break
+if choice == "1":
+    sequenceFile = input("Path: ")
+elif choice == "2":
+    while True:
+        print("Please select a file from the current directory to check.")
+        printingFilesInDir()
+        index = input("What number file will you select? ")
+        ans = gettingSpecificFile(index)
+        if ans == "None such file":
+            print("Please try again.")
+        else:
+            sequenceName = ans
+            break
+else:
+    print("Not a valid choice.")
+    exit()
 
 # Loading the sequence from the file
 sequence = ""
 try:
-    sequence = SeqIO.read(sequenceName, "fasta").seq
+    sequence = SeqIO.read(sequenceFile, "fasta").seq
     if len(sequence) < 1000:
         print("This is not an acceptable genome file.\nThe length of the sequence is too small")
         exit()
+    print("File has been loaded.")
+    print('─' * 10)
 except ValueError:
     print("Sequence didn't load. This file not a .fasta file.")
     exit()
@@ -113,8 +123,17 @@ try:
     print("(If the value is invalid, the value will be set to 70 by default)")
     minimumDTR = int(input("Minimum Length: "))
 except ValueError:
-    print("Value is considered invalid.")
-    minimumDTR = 70
+    print("Value is considered invalid. Default value (70) was implemented.")
+print('─' * 10)
+
+errorBound = 0.95
+try:
+    print("What is the error bound percentage of the DTR you want to search?")
+    print("(If the value is invalid, the value will be set to 95% by default)")
+    errorBound = float(input("Error Bound: ")) / 100
+except ValueError:
+    print("Value is considered invalid. Default value (95%) was implemented.")
+print('─' * 10)
 
 print("Calculating...")
 indexFirst = -1
@@ -124,12 +143,13 @@ bestPercentage = -1.0
 step = 10
 stepCopy = step
 DTRFound = False
+window = 300
 
 # Split the sequence into two halves of 300 and search for the best matching sequence in each
 for DTRLength in range(200, minimumDTR - step, -step):
     print("Checking for DTR of length: " + str(DTRLength))
-    for i in range(300 - DTRLength + 1):
-        for j in range(len(sequence) - 300 - 1, len(sequence) - DTRLength + 1):
+    for i in range(window - DTRLength + 1):
+        for j in range(len(sequence) - window - 1, len(sequence) - DTRLength + 1):
             DTRFound = check(i, j, DTRLength)
             if DTRFound:
                 break
@@ -190,11 +210,7 @@ exit()
 # Possible Improvements:
 #   -Might want to consider searching a wider window instead of just 300 characters
 #   -Can set up command line arguments using argparse
-#   -Have a sequence length cutoff
-#       -The length cutoff is usually already in place, just check if the genome has a large enough size
 #   -Employ jellyfish.jaro_distance() or Levenshtein distance matching
-#   -Have the user decide the error percentage
 #   -Have full file traversal
-#       -Can also have the user input their own file path
 #   -Have an option to write DTR results to an output file
 #   -Implementing ITRs
