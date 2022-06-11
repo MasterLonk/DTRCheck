@@ -6,6 +6,7 @@ import os
 
 
 def printingFilesInDir():
+    """This function lists out all files in the directory"""
     f = 1
     for file in os.listdir():
         print(str(f) + ": " + file)
@@ -13,6 +14,7 @@ def printingFilesInDir():
 
 
 def gettingSpecificFile(target):
+    """This function gets a specified file from the directory"""
     f = 1
     for file in os.listdir():
         if int(f) == int(target):
@@ -25,6 +27,7 @@ def gettingSpecificFile(target):
 # Not counting exactly how similar the two strings are
 # Now have made an O(n) function to get the exact result
 def match(a, b):
+    """This function checks the percentage to which two sequences are equal"""
     if len(a) != len(b):
         print("Lengths are not equal.")
         exit()
@@ -37,10 +40,12 @@ def match(a, b):
 
 
 def maybeDTR(p):
+    """This function checks if a percentage is greater than a specified error bound"""
     return p >= 0.95
 
 
 def printOutSequences(a, b, l, p):
+    """This is a function that prints out the selected sequences to the user"""
     global sequence
     print('─' * 10)
     print("Program found the following sequences having a similarity percentage of " + f"{p:.2%}")
@@ -55,6 +60,7 @@ def printOutSequences(a, b, l, p):
 
 
 def check(i, j, l):
+    """This function checks if the sequence similarity is the greatest and updates and returns variables accordingly"""
     global bestPercentage
     global indexFirst
     global indexSecond
@@ -74,7 +80,7 @@ def check(i, j, l):
 
 # Easy way for a user to get the file from the directory
 # Currently, this DTRCheck can only access the files of the directory it is currently in <- Rectify in future
-sequenceName = ""
+sequenceFile = ""
 while True:
     print("Please select a file from the current directory to check.")
     printingFilesInDir()
@@ -84,6 +90,7 @@ while True:
         print("Please try again.")
     else:
         sequenceName = ans
+        print(ans)
         print("File has been loaded.")
         print('─' * 10)
         break
@@ -92,9 +99,22 @@ while True:
 sequence = ""
 try:
     sequence = SeqIO.read(sequenceName, "fasta").seq
+    if len(sequence) < 1000:
+        print("This is not an acceptable genome file.\nThe length of the sequence is too small")
+        exit()
 except ValueError:
-    print("Sequence didn't load. Is this file not a .fasta file?")
+    print("Sequence didn't load. This file not a .fasta file.")
     exit()
+
+
+minimumDTR = 70
+try:
+    print("What is the minimum length of the DTR you want to search?")
+    print("(If the value is invalid, the value will be set to 70 by default)")
+    minimumDTR = int(input("Minimum Length: "))
+except ValueError:
+    print("Value is considered invalid.")
+    minimumDTR = 70
 
 print("Calculating...")
 indexFirst = -1
@@ -104,34 +124,30 @@ bestPercentage = -1.0
 step = 10
 stepCopy = step
 DTRFound = False
-if len(sequence) >= 600:
-    # Split the sequence into two halves of 300 and search for the best matching sequence
-    # Instead of checking inside the specified range each time, just check all the sequence
-    # Extremely slow -> However, already found better results
-    # Slowness has been resolved by changing the method to compare strings
-    for DTRLength in range(200, 70 - step, -step):
-        print("Checking for DTR of length: " + str(DTRLength))
-        for i in range(300 - DTRLength + 1):
-            for j in range(len(sequence) - 301, len(sequence) - DTRLength + 1):
-                DTRFound = check(i, j, DTRLength)
-                if DTRFound:
-                    break
+
+# Split the sequence into two halves of 300 and search for the best matching sequence in each
+for DTRLength in range(200, minimumDTR - step, -step):
+    print("Checking for DTR of length: " + str(DTRLength))
+    for i in range(300 - DTRLength + 1):
+        for j in range(len(sequence) - 300 - 1, len(sequence) - DTRLength + 1):
+            DTRFound = check(i, j, DTRLength)
             if DTRFound:
                 break
         if DTRFound:
             break
-        print("Best percentage found: " + f"{bestPercentage:.2%}")
-else:
-    print("I'm 90% sure that file is not a genome.")
-    exit()
+    if DTRFound:
+        break
+    print("Best percentage found: " + f"{bestPercentage:.2%}")
 if not DTRFound:
     printOutSequences(indexFirst, indexSecond, indexLength, bestPercentage)
+
 # Now, expand the indexes
 print('─' * 10)
 print("Expanding indexes...")
 
 
 def expandFirstIndex():
+    """Looks on the left side of the sequence to check if any other characters match"""
     global indexFirst
     global indexSecond
     global step
@@ -148,6 +164,7 @@ def expandFirstIndex():
 
 
 def expandSecondIndex():
+    """Looks on the right side of the sequence to check if any other characters match"""
     global indexFirst
     global indexSecond
     global step
@@ -171,9 +188,6 @@ else:
 exit()
 
 # Possible Improvements:
-#   -Add docStrings ("""""") to describe what each function does
-#   -Have user select the size of the DTR they want to search
-#   -Check if the math on line 113 is correct
 #   -Might want to consider searching a wider window instead of just 300 characters
 #   -Can set up command line arguments using argparse
 #   -Have a sequence length cutoff
