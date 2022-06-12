@@ -135,6 +135,15 @@ except ValueError:
     print("Value is considered invalid. Default value (95%) was implemented.")
 print('─' * 10)
 
+window = 300
+try:
+    print("What is the window of the ends of the genome you want to search?")
+    print("(If the value is invalid, the value will be set to 300 characters by default)")
+    errorBound = float(input("Window: "))
+except ValueError:
+    print("Value is considered invalid. Default value (300) was implemented.")
+print('─' * 10)
+
 print("Calculating...")
 indexFirst = -1
 indexLength = -1
@@ -143,7 +152,6 @@ bestPercentage = -1.0
 step = 10
 stepCopy = step
 DTRFound = False
-window = 300
 
 # Split the sequence into two halves of 300 and search for the best matching sequence in each
 for DTRLength in range(200, minimumDTR - step, -step):
@@ -200,17 +208,42 @@ def expandSecondIndex():
 
 expandFirstIndex()
 expandSecondIndex()
+newPercentage = match(sequence[indexFirst:indexFirst + indexLength], sequence[indexSecond:indexSecond + indexLength])
 if step == stepCopy:
     print("Sequence was not able to be expanded.")
 else:
     print("Sequence was expanded by " + str(stepCopy - step) + " character(s)")
-    printOutSequences(indexFirst, indexSecond, indexLength, match(sequence[indexFirst:indexFirst + indexLength], sequence[indexSecond:indexSecond + indexLength]))
+    printOutSequences(indexFirst, indexSecond, indexLength, newPercentage)
+
+# Print the results to an output file
+print('─' * 10)
+if input("Would you like to output the results to a file? (Say yes if true)\n").lower() == "yes":
+    fileName = "DTROutput.txt"
+    if input("Is there a specific path you would like to output to? (Say yes if true)\n").lower() == "yes":
+        path = input("Input a path here: ")
+        try:
+            fileName = os.path.join(path, fileName)
+        except:
+            print("This is not a valid path")
+            exit()
+    else:
+        print("You have not selected to output to a specific path")
+    file = open(fileName, "a")
+    file.write("Program found the following sequences having a similarity percentage of " + f"{newPercentage:.2%}\n")
+    if maybeDTR(newPercentage):
+        file.write("This sequence is most likely to be a DTR.\n")
+    file.write("Sequences have a length of " + str(indexLength) + " character(s)\n")
+    file.write("The genome file has " + str(len(sequence)) + " characters in total\n")
+    file.write("Sequence 1: " + str(sequence[indexFirst:indexFirst + indexLength]) + "\n")
+    file.write("Starting from index " + str(indexFirst) + " to index " + str(indexFirst + indexLength - 1) + "\n")
+    file.write("Sequence 2: " + str(sequence[indexSecond:indexSecond + indexLength]) + "\n")
+    file.write("Starting from index " + str(indexSecond) + " to index " + str(indexSecond + indexLength - 1) + "\n")
+else:
+    print("You have not selected to output the results to a file")
 exit()
 
 # Possible Improvements:
-#   -Might want to consider searching a wider window instead of just 300 characters
 #   -Can set up command line arguments using argparse
 #   -Employ jellyfish.jaro_distance() or Levenshtein distance matching
 #   -Have full file traversal
-#   -Have an option to write DTR results to an output file
 #   -Implementing ITRs
