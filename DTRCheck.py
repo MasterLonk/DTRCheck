@@ -1,6 +1,6 @@
 from Bio import SeqIO
-from difflib import SequenceMatcher
 import os
+
 
 # DTR v2.2
 
@@ -116,7 +116,6 @@ except ValueError:
     print("Sequence didn't load. This file not a .fasta file.")
     exit()
 
-
 minimumDTR = 70
 try:
     print("What is the minimum length of the DTR you want to search?")
@@ -221,14 +220,14 @@ if input("Would you like to output the results to a file? (Say yes if true)\n").
     fileName = "DTROutput.txt"
     if input("Is there a specific path you would like to output to? (Say yes if true)\n").lower() == "yes":
         path = input("Input a path here: ")
-        try:
-            fileName = os.path.join(path, fileName)
-        except:
-            print("This is not a valid path")
-            exit()
+        fileName = os.path.join(path, fileName)
     else:
         print("You have not selected to output to a specific path")
-    file = open(fileName, "a")
+    if fileName != "":
+        file = open(fileName, "a")
+    else:
+        print("You have not specified a valid path.")
+        exit()
     file.write("Program found the following sequences having a similarity percentage of " + f"{newPercentage:.2%}\n")
     if maybeDTR(newPercentage):
         file.write("This sequence is most likely to be a DTR.\n")
