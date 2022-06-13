@@ -23,9 +23,8 @@ def gettingSpecificFile(target):
     return "None such file"
 
 
-# Check how SequenceMatcher actually works
-# Not counting exactly how similar the two strings are
-# Now have made an O(n) function to get the exact result
+# Levenshtein distance matching does not work as intended
+# This works just as well since we just need to compare the two strings
 def match(a, b):
     """This function checks the percentage to which two sequences are equal"""
     if len(a) != len(b):
@@ -35,7 +34,6 @@ def match(a, b):
     for y in range(len(a)):
         if a[y] == b[y]:
             o += 1
-    # m = SequenceMatcher(a=a, b=b).ratio()
     return float(o) / float(len(a))
 
 
@@ -60,21 +58,21 @@ def printOutSequences(a, b, l, p):
     print("Starting from index " + str(b) + " to index " + str(b + l - 1))
 
 
-def check(i, j, l):
+def check(a, b, l):
     """This function checks if the sequence similarity is the greatest and updates and returns variables accordingly"""
     global bestPercentage
     global indexFirst
     global indexSecond
     global indexLength
     global sequence
-    similarity = match(sequence[i:i + l], sequence[j:j + l])
+    similarity = match(sequence[a:a + l], sequence[b:b + l])
     if similarity > bestPercentage:
         bestPercentage = similarity
-        indexFirst = i
-        indexSecond = j
+        indexFirst = a
+        indexSecond = b
         indexLength = l
         if maybeDTR(similarity):
-            printOutSequences(i, j, l, similarity)
+            printOutSequences(a, b, l, similarity)
             return True
     return False
 
@@ -223,26 +221,26 @@ if input("Would you like to output the results to a file? (Say yes if true)\n").
         fileName = os.path.join(path, fileName)
     else:
         print("You have not selected to output to a specific path")
+    output = ""
     if fileName != "":
-        file = open(fileName, "a")
+        output = open(fileName, "a")
     else:
         print("You have not specified a valid path.")
         exit()
-    file.write("Program found the following sequences having a similarity percentage of " + f"{newPercentage:.2%}\n")
+    output.write("Program found the following sequences having a similarity percentage of " + f"{newPercentage:.2%}\n")
     if maybeDTR(newPercentage):
-        file.write("This sequence is most likely to be a DTR.\n")
-    file.write("Sequences have a length of " + str(indexLength) + " character(s)\n")
-    file.write("The genome file has " + str(len(sequence)) + " characters in total\n")
-    file.write("Sequence 1: " + str(sequence[indexFirst:indexFirst + indexLength]) + "\n")
-    file.write("Starting from index " + str(indexFirst) + " to index " + str(indexFirst + indexLength - 1) + "\n")
-    file.write("Sequence 2: " + str(sequence[indexSecond:indexSecond + indexLength]) + "\n")
-    file.write("Starting from index " + str(indexSecond) + " to index " + str(indexSecond + indexLength - 1) + "\n")
+        output.write("This sequence is most likely to be a DTR.\n")
+    output.write("Sequences have a length of " + str(indexLength) + " character(s)\n")
+    output.write("The genome file has " + str(len(sequence)) + " characters in total\n")
+    output.write("Sequence 1: " + str(sequence[indexFirst:indexFirst + indexLength]) + "\n")
+    output.write("Starting from index " + str(indexFirst) + " to index " + str(indexFirst + indexLength - 1) + "\n")
+    output.write("Sequence 2: " + str(sequence[indexSecond:indexSecond + indexLength]) + "\n")
+    output.write("Starting from index " + str(indexSecond) + " to index " + str(indexSecond + indexLength - 1) + "\n")
 else:
     print("You have not selected to output the results to a file")
 exit()
 
 # Possible Improvements:
 #   -Can set up command line arguments using argparse
-#   -Employ jellyfish.jaro_distance() or Levenshtein distance matching
 #   -Have full file traversal
 #   -Implementing ITRs
