@@ -1,8 +1,9 @@
 from Bio import SeqIO
 import os
+import argparse
 
 
-# DTR v2.2
+# DTR v2.3
 
 
 def printingFilesInDir():
@@ -21,6 +22,14 @@ def gettingSpecificFile(target):
             return file
         f += 1
     return "None such file"
+
+
+def validate_file(f):
+    if not os.path.exists(f):
+        # Argparse uses the ArgumentTypeError to give a rejection message like:
+        # error: argument input: x does not exist
+        raise argparse.ArgumentTypeError("{0} does not exist".format(f))
+    return f
 
 
 # Levenshtein distance matching does not work as intended
@@ -77,29 +86,38 @@ def check(a, b, l):
     return False
 
 
-# Easy way for a user to get the file from the directory
+# Getting the path of the genome file
 # Currently, this DTRCheck can only access the files of the directory it is currently in <- Rectify in future
-print("There are two ways to input the genome file")
-print("1: Input a path that leads to the genome file")
-print("2: Search for the genome file within the current directory")
-choice = input("Choice: ")
+
+# Using argparse to get a path from the argument itself
+parser = argparse.ArgumentParser(description="Inputting path of genome file")
 sequenceFile = ""
-if choice == "1":
-    sequenceFile = input("Path: ")
-elif choice == "2":
-    while True:
-        print("Please select a file from the current directory to check.")
-        printingFilesInDir()
-        index = input("What number file will you select? ")
-        ans = gettingSpecificFile(index)
-        if ans == "None such file":
-            print("Please try again.")
-        else:
-            sequenceName = ans
-            break
+# Add arguments for genome file path
+parser.add_argument("-p", "--path", dest="filename", required=False, type=validate_file, help="Genome File", metavar="")
+args = parser.parse_args()
+if args.path is not None:
+    sequenceFile = args.path
 else:
-    print("Not a valid choice.")
-    exit()
+    print("There are two ways to input the genome file")
+    print("1: Input a path that leads to the genome file")
+    print("2: Search for the genome file within the current directory")
+    choice = input("Choice: ")
+    if choice == "1":
+        sequenceFile = input("Path: ")
+    elif choice == "2":
+        while True:
+            print("Please select a file from the current directory to check.")
+            printingFilesInDir()
+            index = input("What number file will you select? ")
+            ans = gettingSpecificFile(index)
+            if ans == "None such file":
+                print("Please try again.")
+            else:
+                sequenceName = ans
+                break
+    else:
+        print("Not a valid choice.")
+        exit()
 
 # Loading the sequence from the file
 sequence = ""
@@ -241,6 +259,5 @@ else:
 exit()
 
 # Possible Improvements:
-#   -Can set up command line arguments using argparse
 #   -Have full file traversal
 #   -Implementing ITRs
