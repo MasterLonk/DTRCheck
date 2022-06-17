@@ -93,10 +93,10 @@ def check(a, b, l):
 parser = argparse.ArgumentParser(description="Inputting path of genome file")
 sequenceFile = ""
 # Add arguments for genome file path
-parser.add_argument("-p", "--path", dest="filename", required=False, type=validate_file, help="Genome File", metavar="")
+parser.add_argument("-p", "--path", dest="filename", required=False, type=validate_file, help="Genome File Path", metavar="")
 args = parser.parse_args()
-if args.path is not None:
-    sequenceFile = args.path
+if args.filename is not None:
+    sequenceFile = args.filename
 else:
     print("There are two ways to input the genome file")
     print("1: Input a path that leads to the genome file")
