@@ -3,7 +3,7 @@ import os
 import argparse
 
 
-# DTR v3
+# Version 3.0
 
 
 def printingFilesInDir():
@@ -33,28 +33,19 @@ def validate_file(f):
 
 
 # Both matchDTR and match ITR take too much time, somehow merge them together
-def matchDTR(a, b):
-    """This function checks the percentage to which two DTR sequences are equal"""
+def matchDTRandITR(a, b):
+    """This function checks the percentage to which two DTR and ITR sequences are equal"""
     if len(a) != len(b):
-        print("Lengths are not equal.")
+        print("Lengths are not equal. A bug has occurred in the program.")
         exit()
-    o = 0
+    d = 0
+    i = 0
     for y in range(len(a)):
         if a[y] == b[y]:
-            o += 1
-    return float(o) / float(len(a))
-
-
-def matchITR(a, b):
-    """This function checks the percentage to which two ITR sequences are equal"""
-    if len(a) != len(b):
-        print("Lengths are not equal.")
-        exit()
-    o = 0
-    for y in range(len(a)):
+            d += 1
         if a[len(a) - 1 - y] == b[y]:
-            o += 1
-    return float(o) / float(len(a))
+            i += 1
+    return float(d) / float(len(a)), float(i) / float(len(a))
 
 
 def maybeSequence(p):
@@ -63,20 +54,22 @@ def maybeSequence(p):
     return p >= errorBound
 
 
-def printOutSequences(a, b, l, p):
+def printOutSequences(a, b, l):
     """This is a function that prints out the selected sequences to the user"""
     global sequence
     global IsItDTR
+    global DTRBestPercentage
+    global ITRBestPercentage
     print('─' * 10)
     if IsItDTR:
-        print("Program found the following sequences having a similarity percentage of " + f"{p:.2%}" + " for being a "
-                                                                                                        "DTR")
-        if maybeSequence(p):
+        print("Program found the following sequences having a similarity percentage of " + f"{DTRBestPercentage:.2%}"
+              + " for being a DTR")
+        if maybeSequence(DTRBestPercentage):
             print("This sequence is most likely to be a DTR.")
     else:
-        print("Program found the following sequences having a similarity percentage of " + f"{p:.2%}" + " for being a "
-                                                                                                        "ITR")
-        if maybeSequence(p):
+        print("Program found the following sequences having a similarity percentage of " + f"{ITRBestPercentage:.2%}"
+              + " for being a ITR")
+        if maybeSequence(ITRBestPercentage):
             print("This sequence is most likely to be a ITR.")
     print("Sequences have a length of " + str(l) + " character(s)")
     print("The genome file has " + str(len(sequence)) + " characters in total")
@@ -98,8 +91,7 @@ def DTROrITRMatch(a, b, l):
     global IsItDTR
     global DTRFound
     global ITRFound
-    DTRSimilarity = matchDTR(sequence[a:a + l], sequence[b:b + l])
-    ITRSimilarity = matchITR(sequence[a:a + l], sequence[b:b + l])
+    DTRSimilarity, ITRSimilarity = matchDTRandITR(sequence[a:a + l], sequence[b:b + l])
     if DTRSimilarity > DTRBestPercentage:
         if DTRSimilarity > ITRBestPercentage:
             IsItDTR = True
@@ -109,7 +101,7 @@ def DTROrITRMatch(a, b, l):
         indexLength = l
         if maybeSequence(DTRSimilarity):
             DTRFound = True
-            printOutSequences(a, b, l, DTRSimilarity)
+            printOutSequences(a, b, l)
     if ITRSimilarity > DTRBestPercentage:
         if ITRSimilarity > DTRBestPercentage:
             IsItDTR = False
@@ -119,7 +111,7 @@ def DTROrITRMatch(a, b, l):
         indexLength = l
         if maybeSequence(ITRSimilarity):
             ITRFound = False
-            printOutSequences(a, b, l, ITRSimilarity)
+            printOutSequences(a, b, l)
 
 
 # Getting the path of the genome file
@@ -228,7 +220,7 @@ for MatchLength in range(200, minimumDTR - step, -step):
     print("ITR best percentage found: " + f"{ITRBestPercentage:.2%}")
 
 if not DTRFound and not ITRFound:
-    printOutSequences(indexFirst, indexSecond, indexLength, DTRBestPercentage)
+    printOutSequences(indexFirst, indexSecond, indexLength)
 
 # Now, expand the indexes
 print('─' * 10)
@@ -289,17 +281,17 @@ def expandITRIndex():
 
 if IsItDTR:
     expandDTRIndex()
-    newPercentage = matchDTR(sequence[indexFirst:indexFirst + indexLength],
-                             sequence[indexSecond:indexSecond + indexLength])
+    DTRBestPercentage, _ = matchDTRandITR(sequence[indexFirst:indexFirst + indexLength],
+                                      sequence[indexSecond:indexSecond + indexLength])
 else:
     expandITRIndex()
-    newPercentage = matchITR(sequence[indexFirst:indexFirst + indexLength],
-                             sequence[indexSecond:indexSecond + indexLength])
+    _, ITRBestPercentage = matchDTRandITR(sequence[indexFirst:indexFirst + indexLength],
+                                      sequence[indexSecond:indexSecond + indexLength])
 if step == stepCopy:
     print("Sequence was not able to be expanded.")
 else:
     print("Sequence was expanded by " + str(stepCopy - step) + " character(s)")
-    printOutSequences(indexFirst, indexSecond, indexLength, newPercentage)
+    printOutSequences(indexFirst, indexSecond, indexLength)
 
 # Print the results to an output file
 print('─' * 10)
@@ -320,14 +312,14 @@ if input("Would you like to output the results to a file? (Say yes if true)\n").
         print("You have not specified a valid path.")
         exit()
     if IsItDTR:
-        output.write("Program found the following sequences having a similarity percentage of " + f"{newPercentage:.2%}"
-                     + " for being a DTR\n")
-        if maybeSequence(newPercentage):
+        output.write("Program found the following sequences having a similarity percentage of "
+                     + f"{DTRBestPercentage:.2%} for being a DTR\n")
+        if maybeSequence(DTRBestPercentage):
             output.write("This sequence is most likely to be a DTR.\n")
     else:
-        output.write("Program found the following sequences having a similarity percentage of " + f"{newPercentage:.2%}"
-                     + " for being a ITR\n")
-        if maybeSequence(newPercentage):
+        output.write("Program found the following sequences having a similarity percentage of "
+                     + f"{ITRBestPercentage:.2%} for being a ITR\n")
+        if maybeSequence(ITRBestPercentage):
             output.write("This sequence is most likely to be a ITR.\n")
     output.write("Sequences have a length of " + str(indexLength) + " character(s)\n")
     output.write("The genome file has " + str(len(sequence)) + " characters in total\n")
